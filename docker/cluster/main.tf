@@ -1,5 +1,5 @@
-resource "aws_ecs_cluster" "class3" {
-  name = "class3"
+resource "aws_ecs_cluster" "classtest" {
+  name = "classtest"
 
   setting {
     name  = "containerInsights"
