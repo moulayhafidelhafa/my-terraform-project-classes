@@ -1,5 +1,5 @@
-resource "aws_ecs_cluster" "classtest" {
-  name = "classtest"
+resource "aws_ecs_cluster"devclass" {
+  name = "devclass"
 
   setting {
     name  = "containerInsights"
