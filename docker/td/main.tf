@@ -4,7 +4,7 @@ resource "aws_ecs_task_definition" "application" {
   "task_role_arn":      = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
    containerDefinitions : <<TASK_DEFINITION
 {    
-    containerDefinitions" : {
+    containerDefinitions" : [
         {
             "name": "wordppress",
             "image": "docker.io/wordpress:latest",
@@ -36,7 +36,7 @@ resource "aws_ecs_task_definition" "application" {
             },
             "systemControls": []
         }
-    ],
+       
     "family": "application",
     "networkMode": "awsvpc",
     "revision": 6,
