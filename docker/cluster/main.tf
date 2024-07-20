@@ -1,4 +1,4 @@
-resource "aws_ecs_cluster "class3" {
+resource "aws_ecs_cluster" "class3" {
   name = "class3"
 
   setting {
