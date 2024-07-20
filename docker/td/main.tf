@@ -1,196 +1,82 @@
-resource "aws_iam_role" "this" {
-  name = "ecs_execution_role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
+resource "aws_ecs_task_definition" "application" {
+  family                = "application"
+  "executionRoleArn":   = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  "task_role_arn":      = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+   containerDefinitions : <<TASK_DEFINITION
+{    
+    containerDefinitions" : {
+        {
+            "name": "wordppress",
+            "image": "docker.io/wordpress:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "wordppress-80-tcp",
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/application",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
         }
-      },
-    ]
-  })
-}
-
-
-resource "aws_iam_role" "task_role" {
-  name = "task_role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
-
-resource "aws_iam_policy" "this" {
-  name = "ecs_execution_policy"
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Action" : [
-          "logs:PutLogEvents",
-          "logs:CreateLogStream",
-          "logs:CreateLogGroup",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchGetImage",
-          "ecr:BatchCheckLayerAvailability"
-        ],
-        "Effect" : "Allow",
-        "Resource" : "*",
-        "Sid" : ""
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "this" {
-  role       = aws_iam_role.this.name
-  policy_arn = aws_iam_policy.this.arn
-}
-
-
-resource "aws_iam_role" "task" {
-  name = "ecs_task_role"
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Sid" : "",
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "ecs-tasks.amazonaws.com"
+    ],
+    "family": "application",
+    "networkMode": "awsvpc",
+    "revision": 6,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
         },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
-
-}
-
-resource "aws_iam_policy" "task" {
-  name = "ecs-task_policy"
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Action" : [
-          "ssmmessages:OpenDataChannel",
-          "ssmmessages:OpenControlChannel",
-          "ssmmessages:CreateDataChannel",
-          "ssmmessages:CreateControlChannel"
-        ],
-        "Effect" : "Allow",
-        "Resource" : "*",
-        "Sid" : ""
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "task" {
-  role       = aws_iam_role.task.name
-  policy_arn = aws_iam_policy.task.arn
-}
-
-
-
-data "aws_secretsmanager_secret" "ecs" {
-  name = "ecs_db_credentials"
-}
-
-
-resource "aws_ecs_task_definition" "application-iaac" {
-  family                   = "application-iaac"
-  execution_role_arn       = aws_iam_role.this.arn
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  task_role_arn            = aws_iam_role.task_role.arn
-  cpu                      = "1024"
-  memory                   = "3072"
-  container_definitions    = <<TASK_DEFINITION
-[
-  {
-    "name": "wordpress",
-    "image": "docker.io/wordpress:latest",
-    "cpu": 0,
-    "portMappings": [
-      {
-        "name": "wordpress-80-tcp",
-        "containerPort": 80,
-        "hostPort": 80,
-        "protocol": "tcp",
-        "appProtocol": "http"
-      }
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
     ],
-    "essential": true,
-    "environment": [
-      {
-        "name": "WORDPRESS_DB_HOST",
-        "value": "${data.aws_secretsmanager_secret.ecs.arn}:host"
-      },
-      {
-        "name": "WORDPRESS_DB_NAME",
-        "value": "${data.aws_secretsmanager_secret.ecs.arn}:db_name"
-      },
-      {
-        "name": "WORDPRESS_DB_USER",
-        "value": "${data.aws_secretsmanager_secret.ecs.arn}:user"
-      },
-      {
-        "name": "WORDPRESS_DB_PASSWORD",
-        "value": "${data.aws_secretsmanager_secret.ecs.arn}:password"
-      }
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
     ],
-    "environmentFiles": [],
-    "mountPoints": [],
-    "volumesFrom": [],
-    "ulimits": [],
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "/ecs/application",
-        "awslogs-create-group": "true",
-        "awslogs-region": "us-east-2",
-        "awslogs-stream-prefix": "ecs"
-      },
-      "secretOptions": []
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
     },
-    "systemControls": []
-  }
-]
-TASK_DEFINITION
-}
-
-
-
-
-
-resource "aws_ecs_service" "wordpress-app" {
-  name            = "wordpress-app"
-  cluster         = "class3"
-  task_definition = aws_ecs_task_definition.application-iaac.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-  network_configuration {
-    assign_public_ip = true
-    subnets = [
-      aws_default_subnet.default_az1.id,
-      aws_default_subnet.default_az2.id,
-    ]
-  }
+    "registeredAt": "2024-07-20T15:21:37.057Z",
+    "registeredBy": "arn:aws:iam::767397838496:root",
+    "tags": []
 }
