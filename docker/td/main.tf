@@ -1,6 +1,6 @@
 resource "aws_ecs_task_definition" "application" {
   family                = "application"
-  executionRoleArn      = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  execution_role_arn    = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
   task_role_arn         = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
   container_definitions = <<TASK_DEFINITION
 }
