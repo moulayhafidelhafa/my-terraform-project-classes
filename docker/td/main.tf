@@ -1,82 +1,106 @@
-resource "aws_ecs_task_definition" "application" {
-  family                = "application"
-  "executionRoleArn" :   = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-  "task_role_arn":      = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-   containerDefinitions : <<TASK_DEFINITION
-{    
-    containerDefinitions" : [
-        {
-            "name": "wordppress",
-            "image": "docker.io/wordpress:latest",
-            "cpu": 0,
-            "portMappings": [
-                {
-                    "name": "wordppress-80-tcp",
-                    "containerPort": 80,
-                    "hostPort": 80,
-                    "protocol": "tcp",
-                    "appProtocol": "http"
-                }
-            ],
-            "essential": true,
-            "environment": [],
-            "environmentFiles": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "ulimits": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/application",
-                    "awslogs-create-group": "true",
-                    "awslogs-region": "us-east-2",
-                    "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
-            },
-            "systemControls": []
-        }
-       
-    "family": "application",
-    "networkMode": "awsvpc",
-    "revision": 6,
-    "volumes": [],
-    "status": "ACTIVE",
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
-            "name": "ecs.capability.execution-role-awslogs"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-        }
-    ],
-    "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-        "FARGATE"
-    ],
-    "requiresCompatibilities": [
-        "FARGATE"
-    ],
-    "cpu": "1024",
-    "memory": "3072",
-    "runtimePlatform": {
-        "cpuArchitecture": "X86_64",
-        "operatingSystemFamily": "LINUX"
-    },
-    "registeredAt": "2024-07-20T15:21:37.057Z",
-    "registeredBy": "arn:aws:iam::767397838496:root",
-    "tags": []
+resource "aws_default_subnet" "default_az1" {
+  availability_zone = "${var.region}a"
+  tags = {
+    Name = "Default subnet for ${var.region}a"
+  }
+}
+
+resource "aws_default_subnet" "default_az2" {
+  availability_zone = "${var.region}b"
+  tags = {
+    Name = "Default subnet for ${var.region}b"
+  }
+}
+
+resource "aws_default_subnet" "default_az3" {
+  availability_zone = "${var.region}b"
+  tags = {
+    Name = "Default subnet for ${var.region}b"
+  }
+}
+
+
+resource "aws_db_subnet_group" "default" {
+  name = "ecs"
+  subnet_ids = [
+    aws_default_subnet.default_az1.id,
+    aws_default_subnet.default_az2.id,
+    aws_default_subnet.default_az3.id,
+  ]
+}
+
+
+resource "aws_security_group" "ecsdb" {
+  name        = "ecsdb"
+  description = "Allow MySQL access"
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+
+resource "random_password" "user" {
+  length  = 8
+  special = false
+  numeric  = false
+  upper   = false
+}
+
+resource "random_password" "password" {
+  length  = 16
+  special = true
+  numeric  = true
+  upper   = false
+}
+
+resource "aws_db_instance" "default" {
+  db_subnet_group_name   = aws_db_subnet_group.default.name
+  allocated_storage      = 10
+  db_name                = "mydb"
+  engine                 = "mysql"
+  engine_version         = "8.0"
+  instance_class         = "db.t3.micro"
+  username               = random_password.user.result
+  password               = random_password.password.result
+  parameter_group_name   = "default.mysql8.0"
+  skip_final_snapshot    = true
+  publicly_accessible    = true
+  vpc_security_group_ids = [aws_security_group.ecsdb.id]
+}
+
+resource "null_resource" "create_db" {
+  provisioner "local-exec" {
+    command = <<EOT
+mysql -h ${aws_db_instance.default.address} -u${random_password.user.result} -p${random_password.password.result} -e "CREATE DATABASE wordpress;"
+    EOT
+  }
+
+  depends_on = [aws_db_instance.default]
+}
+
+
+resource "aws_secretsmanager_secret" "ecs_db_credentials" {
+  name = "ecs_db_credentials"
+}
+
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.ecs_db_credentials.id
+  secret_string = jsonencode({
+    username = random_password.user.result
+    password = random_password.password.result
+    host     = aws_db_instance.default.address
+    db_name  = "wordpress"
+  })
 }
