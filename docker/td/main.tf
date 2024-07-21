@@ -16,6 +16,7 @@ resource "aws_ecs_task_definition" "application" {
         "containerPort": 80,
         "hostPort": 80,
         "protocol": "tcp"
+        "appProtocol": "http"
       }
     ],
     "essential": true,
@@ -32,6 +33,8 @@ resource "aws_ecs_task_definition" "application" {
         "awslogs-stream-prefix": "ecs"
       }
     },
+    "systemControls": []
+  },
     "systemControls": []
   }
 ]
