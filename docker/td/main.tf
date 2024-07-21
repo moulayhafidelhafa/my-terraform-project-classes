@@ -77,12 +77,10 @@ resource "aws_ecs_task_definition" "application" {
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
-    },
-    "registeredAt": "2024-07-21T15:56:36.333Z",
-    "registeredBy": "arn:aws:iam::767397838496:root",
-    "tags": []
+    }
+]
+TASK_DEFINITION
 }
-
 
 
 
