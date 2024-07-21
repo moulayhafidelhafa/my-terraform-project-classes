@@ -1,40 +1,42 @@
 resource "aws_ecs_task_definition" "application" {
-  family            = "application"
-  execution_role_arn  = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-  task_role_arn     = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-  container_definitions = <<TASK_DEFINITION
+  family                = "application"
+  execution_role_arn    = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  task_role_arn         = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  requires_compatibilities = ["FARGATE"]
+  network_mode          = "awsvpc"
+  cpu                   = "256"
+  memory                = "512"
+  container_definitions = <<DEFINITION
 [
-{
-    "name": "wordppress",
+  {
+    "name": "wordpress",
     "image": "docker.io/wordpress:latest",
     "cpu": 0,
+    "memory": 512,
     "portMappings": [
       {
-       "name": "wordppress-80-tcp",
-       "containerPort": 80,
-       "hostPort": 80,
-       "protocol": "tcp",
-       "appProtocol": "http"
-     }
+        "containerPort": 80,
+        "hostPort": 80,
+        "protocol": "tcp"
+      }
     ],
-           "essential": true,
-            "environment": [],
-            "environmentFiles": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "ulimits": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/application",
-                    "awslogs-create-group": "true",
-                    "awslogs-region": "us-east-2",
-                    "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
-            },
-            "systemControls": []
-        }
-]  
-TASK_DEFINITION
+    "essential": true,
+    "environment": [],
+    "mountPoints": [],
+    "volumesFrom": [],
+    "ulimits": [],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/application",
+        "awslogs-create-group": "true",
+        "awslogs-region": "us-east-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "systemControls": []
+  }
+]
+DEFINITION
 }
+
