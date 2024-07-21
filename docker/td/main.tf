@@ -4,6 +4,7 @@ resource "aws_ecs_task_definition" "application" {
   task_role_arn     = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
   container_definitions = <<TASK_DEFINITION
 {
+{
     "containerDefinitions": [
         {
             "name": "wordppress",
@@ -75,10 +76,7 @@ resource "aws_ecs_task_definition" "application" {
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
-    },
-    "registeredAt": "2024-07-20T15:21:37.057Z",
-    "registeredBy": "arn:aws:iam::767397838496:root",
-    "tags": []
-}
+    }
+]  
 TASK_DEFINITION
 }
