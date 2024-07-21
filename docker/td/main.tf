@@ -2,10 +2,7 @@ resource "aws_ecs_task_definition" "application" {
   family                = "application"
   execution_role_arn    = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
   task_role_arn         = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-  cpu                   = "1024"
-  memory                = "3072"
-  container_definitions = <<TASK_DEFINITION
-[
+  container_definitions = jsonencode([
     {
       name: "wordpress",
       image: "docker.io/wordpress:latest",
@@ -37,8 +34,7 @@ resource "aws_ecs_task_definition" "application" {
       },
       systemControls: []
     }
-]
-TASK_DEFINITION
+  ])
 }
 
 
