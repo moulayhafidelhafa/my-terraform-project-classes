@@ -6,7 +6,7 @@ resource "aws_ecs_task_definition" "application" {
       name      = "wordpress"
       image     = "docker.io/wordpress:latest"
       cpu       = 0
-      memory    = 512  # Specify the memory (in MiB) that your container needs
+      memory    = 500  # Specify the memory (in MiB) that your container needs
       essential = true
       portMappings = [
         {
