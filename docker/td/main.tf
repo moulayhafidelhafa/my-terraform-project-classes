@@ -1,41 +1,36 @@
 resource "aws_ecs_task_definition" "application" {
-  family                = "application"
-  execution_role_arn    = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
-  task_role_arn         = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  family = "application"
+  
   container_definitions = jsonencode([
     {
-      "name": "wordpress",
-      "image": "docker.io/wordpress:latest",
-      "cpu": 0,
-      "portMappings": [
+      name      = "wordpress"
+      image     = "docker.io/wordpress:latest"
+      cpu       = 0
+      memory    = 512  # Specify the memory (in MiB) that your container needs
+      essential = true
+      portMappings = [
         {
-          "name": "wordpress-80-tcp",
-          "containerPort": 80,
-          "hostPort": 80,
-          "protocol": "tcp",
-          "appProtocol": "http"
+          containerPort = 80
+          hostPort      = 80
+          protocol      = "tcp"
         }
-      ],
-      "essential": true,
-      "environment": [],
-      "environmentFiles": [],
-      "mountPoints": [],
-      "volumesFrom": [],
-      "ulimits": [],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/application",
-          "awslogs-create-group": "true",
-          "awslogs-region": var.region,  # Reference the 'region' variable
-          "awslogs-stream-prefix": "ecs"
-        },
-        "secretOptions": []
-      },
-      "systemControls": []
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/application"
+          awslogs-region        = "us-east-2"
+          awslogs-stream-prefix = "ecs"
+          awslogs-create-group  = "true"
+        }
+      }
     }
-  ])
+  ]
+
+  task_role_arn = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
+  execution_role_arn = "arn:aws:iam::767397838496:role/ecsTaskExecutionRole"
 }
+
 
 
 
